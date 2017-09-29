@@ -30,7 +30,19 @@ def softmax_loss_naive(W, X, y, reg):
   # here, it is easy to run into numeric instability. Don't forget the        #
   # regularization!                                                           #
   #############################################################################
-  pass
+  loss = 0.0
+  for i in xrange(X.shape[0]):
+    f_i = X[i].dot(W)
+    f_i -= np.max(f_i)
+    sum_j = np.sum(np.exp(f_i))
+    loss += np.log(sum_j) - f_i[y[i]]
+    for k in range(W.shape[1]):
+      p_k = np.exp(f_i[k]) / sum_j
+      dW[:, k] += (p_k - (k == y[i])) * X[i]
+  loss /= X.shape[0]
+  dW /= X.shape[0]
+  loss += 0.5 * np.sum((reg * W) * W)
+  dW += reg * W
   #############################################################################
   #                          END OF YOUR CODE                                 #
   #############################################################################
@@ -54,7 +66,18 @@ def softmax_loss_vectorized(W, X, y, reg):
   # here, it is easy to run into numeric instability. Don't forget the        #
   # regularization!                                                           #
   #############################################################################
-  pass
+  f = X.dot(W)
+  f -= np.max(f, axis=1, keepdims=True)
+  sum_f = np.sum(np.exp(f), axis=1, keepdims=True)
+  p = np.exp(f) / sum_f
+  loss = np.sum(-np.log(p[np.arange(X.shape[0]), y]))
+  indicators = np.zeros_like(p)
+  indicators[np.arange(X.shape[0]), y] = 1
+  dW = X.T.dot(p - indicators)
+  loss /= X.shape[0]
+  dW /= X.shape[0]
+  loss += 0.5 * np.sum((reg * W) * W)
+  dW += reg * W
   #############################################################################
   #                          END OF YOUR CODE                                 #
   #############################################################################
