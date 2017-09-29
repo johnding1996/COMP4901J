@@ -41,8 +41,8 @@ def softmax_loss_naive(W, X, y, reg):
       dW[:, k] += (p_k - (k == y[i])) * X[i]
   loss /= X.shape[0]
   dW /= X.shape[0]
-  loss += 0.5 * np.sum((reg * W) * W)
-  dW += reg * W
+  loss += np.sum((reg * W) * W)
+  dW += 2 * reg * W
   #############################################################################
   #                          END OF YOUR CODE                                 #
   #############################################################################
@@ -76,8 +76,8 @@ def softmax_loss_vectorized(W, X, y, reg):
   dW = X.T.dot(p - indicators)
   loss /= X.shape[0]
   dW /= X.shape[0]
-  loss += 0.5 * np.sum((reg * W) * W)
-  dW += reg * W
+  loss += np.sum((reg * W) * W)
+  dW += 2 * reg * W
   #############################################################################
   #                          END OF YOUR CODE                                 #
   #############################################################################
