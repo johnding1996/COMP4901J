@@ -148,7 +148,7 @@ def color_histogram_hsv(im, nbin=10, xmin=0, xmax=255, normalized=True):
   return imhist
 
 
-def daisy(im, step=4, radius=8, rings=3, histograms=8, orientations=8,
+def daisy(im, step=4, radius=10, rings=3, histograms=3, orientations=4,
           normalization='l1', sigmas=None, ring_radii=None):
     '''
     Revised from skimage.feature.daisy:
