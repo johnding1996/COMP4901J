@@ -44,8 +44,8 @@ def svm_loss_naive(W, X, y, reg):
   dW /= num_train
 
   # Add regularization to the loss.
-  loss += 0.5 * np.sum((reg * W) * W)
-  dW += reg * W
+  loss += np.sum((reg * W) * W)
+  dW += 2 * reg * W
 
   #############################################################################
   # TODO:                                                                     #
@@ -79,7 +79,7 @@ def svm_loss_vectorized(W, X, y, reg):
   margins = np.maximum(0, scores - tc_scores + 1)
   margins[np.arange(X.shape[0]), y] = 0
   loss = np.mean(np.sum(margins, axis = 1))
-  loss += 0.5 * np.sum((reg * W) * W)
+  loss += np.sum((reg * W) * W)
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
@@ -98,7 +98,7 @@ def svm_loss_vectorized(W, X, y, reg):
   mask[np.arange(X.shape[0]), y] = -np.sum(mask, axis = 1)
   dW = X.T.dot(mask)
   dW /= X.shape[0]
-  dW += reg * W
+  dW += 2 * reg * W
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
