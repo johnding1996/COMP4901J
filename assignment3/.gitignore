@@ -1,3 +1,4 @@
+datasets/
 *.swp
 *.pyc
 .env/*

@@ -137,7 +137,37 @@ class CaptioningRNN(object):
         # defined above to store loss and gradients; grads[k] should give the      #
         # gradients for self.params[k].                                            #
         ############################################################################
-        pass
+        # Forward pass
+        h0 = np.dot(features, W_proj) + b_proj
+        x, cache_embedding = word_embedding_forward(captions_in, W_embed)
+        if self.cell_type == 'rnn':
+            h, cache_rnn = rnn_forward(x, h0, Wx, Wh, b)
+        elif self.cell_type == 'lstm':
+            h, cache_rnn = lstm_forward(x, h0, Wx, Wh, b)
+        else:
+            raise ValueError('Not supported cell type %s.' % (self.cell_type))
+        scores, cache_affine = temporal_affine_forward(h, W_vocab, b_vocab)
+        loss, dscores = temporal_softmax_loss(scores, captions_out, mask)
+        # Backward pass
+        dh, dW_vocab, db_vocab = temporal_affine_backward(dscores, cache_affine)
+        if self.cell_type == 'rnn':
+            dx, dh0, dWx, dWh, db = rnn_backward(dh, cache_rnn)
+        elif self.cell_type == 'lstm':
+            dx, dh0, dWx, dWh, db = lstm_backward(dh, cache_rnn)
+        else:
+            raise ValueError('Not supported cell type %s.' % (self.cell_type))
+        dW_embed = word_embedding_backward(dx, cache_embedding)
+        dW_proj = np.dot(features.T, dh0)
+        db_proj = np.sum(dh0, axis=0)
+        # Record grads
+        grads['W_proj'] = dW_proj
+        grads['b_proj'] = db_proj
+        grads['W_embed'] = dW_embed
+        grads['Wx'] = dWx
+        grads['Wh'] = dWh
+        grads['b'] = db
+        grads['W_vocab'] = dW_vocab
+        grads['b_vocab'] = db_vocab
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
@@ -199,7 +229,28 @@ class CaptioningRNN(object):
         # functions; you'll need to call rnn_step_forward or lstm_step_forward in #
         # a loop.                                                                 #
         ###########################################################################
-        pass
+        prev_word = self._start * np.ones((N, 1), dtype=np.int32)
+        prev_h, affine_cache = affine_forward(features, W_proj, b_proj)
+        H = Wh.shape[0]
+        prev_c = np.zeros((N, H))
+        for t in range(max_length):
+            # Word embedding layer
+            embed_out, embed_cache = word_embedding_forward(prev_word, W_embed)
+            embed_out = embed_out.reshape((embed_out.shape[0],-1))
+            if self.cell_type == 'lstm':
+                # LSTM layer
+                next_h, next_c, cache = lstm_step_forward(embed_out, prev_h, prev_c, Wx, Wh, b)
+                prev_h = next_h
+                prev_c = next_c
+            elif self.cell_type == 'rnn':
+                # RNN layer
+                next_h, cache = rnn_step_forward(embed_out, prev_h, Wx, Wh, b)
+                prev_h = next_h
+            else:
+                raise ValueError('Not supported cell type %s.' % (self.cell_type))
+            scores, temp_cache = affine_forward(prev_h, W_vocab, b_vocab)
+            captions[:, t] = scores.argmax(axis=1)
+            prev_word = captions[:, t].reshape(N, 1)
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
